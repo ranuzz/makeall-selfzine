@@ -1,0 +1,4 @@
+dist
+wrangler.toml.prod
+README.md
+public/
