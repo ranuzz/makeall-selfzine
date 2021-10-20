@@ -10,10 +10,97 @@ import { authorize, handleRedirect, logout  } from "./auth0"
  */
 const DEBUG = false
 
+const hydrateState = (state = {}) => ({
+  element: head => {
+    const jsonState = JSON.stringify(state)
+    const scriptTag = `<script id="edge_state" type="application/json">${jsonState}</script>`
+    head.append(scriptTag, { html: true })
+  },
+})
+
 addEventListener('fetch', event => {
   event.respondWith(handleEvent(event))
 })
 
+
+async function handleEvent(event) {
+  let request = event.request
+  let response = new Response(null)
+  const url = new URL(request.url)
+
+  try {
+
+    // BEGINNING OF AUTHORIZATION CODE BLOCK
+    const [authorized, { authorization, redirectUrl }] = await authorize(event)
+    if (authorized && authorization.accessToken) {
+      request = new Request(request, {
+        headers: {
+          Authorization: `Bearer ${authorization.accessToken}`,
+        },
+      })
+    }
+
+    // BEGINNING OF HANDLE AUTH REDIRECT CODE BLOCK
+    if (url.pathname === "/auth") {
+      try {
+        const authorizedResponse = await handleRedirect(event)
+        if (!authorizedResponse) {
+          return new Response("Unauthorized", { status: 401 })
+        }
+        response = new Response("Persisting AuthCode", {
+          response,
+          ...authorizedResponse,
+        })
+        return response
+      } catch (e) {
+        return new Response(e.message || e.toString(), { status: 500 })
+      }
+    }
+    // END OF HANDLE AUTH REDIRECT CODE BLOCK
+
+    // BEGINNING OF REDIRECT CODE BLOCK
+    if (!authorized) {
+      return Response.redirect(redirectUrl)
+    }
+    // END OF REDIRECT CODE BLOCK
+
+    // END OF AUTHORIZATION CODE BLOCK
+
+    // BEGINNING OF LOGOUT CODE BLOCK
+    if (url.pathname === "/logout") {
+      try {
+        const { headers } = logout(event)
+        return headers
+          ? new Response(response.body, {
+              ...response,
+              headers: Object.assign({}, response.headers, headers)
+            })
+          : Response.redirect(url.origin)
+      } catch (e) {
+        return new Response(e.message || e.toString(), { status: 500 })
+      }
+    }
+    // END OF LOGOUT CODE BLOCK
+
+    // BEGINNING OF WORKERS SITES
+    // Make sure to not touch this code for the majority of the tutorial.
+    response = await getAssetFromKV(event)
+    // END OF WORKERS SITES
+
+    // BEGINNING OF STATE HYDRATION CODE BLOCK
+    return new HTMLRewriter()
+      .on("head", hydrateState(authorization.userInfo))
+      .transform(response)
+    // END OF STATE HYDRATION CODE BLOCK
+
+    //return response
+  } catch (e) {
+    return new Response(e.message || e.toString(), { status: 500 })
+  }
+}
+
+
+/*
 async function handleEvent(event) {
 
   let request = event.request
@@ -86,10 +173,7 @@ async function handleEvent(event) {
 
   let options = {}
 
-  /**
-   * You can add custom logic to how we fetch your assets
-   * by configuring the function `mapRequestToAsset`
-   */
+
   // options.mapRequestToAsset = handlePrefix(/^\/docs/)
 
   try {
@@ -128,6 +212,7 @@ async function handleEvent(event) {
     return new Response(e.message || e.toString(), { status: 500 })
   }
 }
+*/
 
 /**
  * Here's one example of how to modify a request to

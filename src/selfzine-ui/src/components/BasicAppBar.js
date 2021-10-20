@@ -24,8 +24,12 @@ export default function BasicAppBar() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             SelfZine
           </Typography>
-          <Button color="inherit" onClick={() => window.location = '/login'}>Login</Button>
-          <Button color="inherit" onClick={() => window.location = '/logout'}>Logout</Button>
+          <Button color="inherit" onClick={
+            () => {
+              document.cookie = "AUTH0-AUTH=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+              window.location = '/logout'
+            }
+            }>Logout</Button>
         </Toolbar>
       </AppBar>
     </Box>
