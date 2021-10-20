@@ -216,3 +216,30 @@ export const handleRedirect = async event => {
     }
     return {}
   }
+
+export const getItems = async (userInfo) => {
+  return await AUTH_STORE.get(userInfo.email);
+}
+
+export const addItem = async (userInfo, item) => {
+  
+  let curItmes = getItems(userInfo);
+  let ts = parseInt(new Date().getTime() / 1000) * 2;
+  let delkey = null;
+  let count = 0;
+  for (var prop in curItmes) {
+    if (parseInt(prop) < ts) {
+      delkey = prop;
+    }
+    count += 1;
+  }
+
+  if (delkey !== null && count >= 10) {
+    delete curItmes[prop];
+  }
+
+  let itemKey = parseInt(new Date().getTime() / 1000).toString();
+  curItmes[itemKey] = item;
+
+  await AUTH_STORE.put(userInfo.email, JSON.stringify(curItmes));
+}

@@ -1,5 +1,5 @@
 import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler'
-import { authorize, handleRedirect, logout  } from "./auth0"
+import { authorize, handleRedirect, logout, addItem, getItems  } from "./auth0"
 
 /**
  * The DEBUG flag will do two things that help during development:
@@ -18,6 +18,14 @@ const hydrateState = (state = {}) => ({
   },
 })
 
+const hydrateItems = (state = {}) => ({
+  element: head => {
+    const jsonState = JSON.stringify(state)
+    const scriptTag = `<script id="edge_items" type="application/json">${jsonState}</script>`
+    head.append(scriptTag, { html: true })
+  },
+})
+
 addEventListener('fetch', event => {
   event.respondWith(handleEvent(event))
 })
@@ -27,17 +35,18 @@ async function handleEvent(event) {
   let request = event.request
   let response = new Response(null)
   const url = new URL(request.url)
-
+  let userItems = {};
   try {
 
     // BEGINNING OF AUTHORIZATION CODE BLOCK
     const [authorized, { authorization, redirectUrl }] = await authorize(event)
     if (authorized && authorization.accessToken) {
-      request = new Request(request, {
-        headers: {
-          Authorization: `Bearer ${authorization.accessToken}`,
-        },
-      })
+      // request = new Request(request, {
+      //   headers: {
+      //     ...request.headers,
+      //     Authorization: `Bearer ${authorization.accessToken}`,
+      //   },
+      // })
     }
 
     // BEGINNING OF HANDLE AUTH REDIRECT CODE BLOCK
@@ -64,6 +73,7 @@ async function handleEvent(event) {
     }
     // END OF REDIRECT CODE BLOCK
 
+    
     // END OF AUTHORIZATION CODE BLOCK
 
     // BEGINNING OF LOGOUT CODE BLOCK
@@ -80,16 +90,37 @@ async function handleEvent(event) {
         return new Response(e.message || e.toString(), { status: 500 })
       }
     }
+
+    if (url.pathname === "/submititem") {
+      try {
+        if (request.method !== "POST") {
+          return new Response("Method Not Allowed", {
+            status: 405
+          })
+        }
+
+        const body = await request.formData();
+        const {
+          item
+        } = Object.fromEntries(body)
+
+        await addItem(authorization.userInfo, item);
+        return Response.redirect(url.origin);
+      } catch (e) {
+        return new Response(e.message || e.toString(), { status: 500 })
+      }
+    }
     // END OF LOGOUT CODE BLOCK
 
     // BEGINNING OF WORKERS SITES
     // Make sure to not touch this code for the majority of the tutorial.
     response = await getAssetFromKV(event)
     // END OF WORKERS SITES
-
+    userItems = await getItems(authorization.userInfo);
     // BEGINNING OF STATE HYDRATION CODE BLOCK
     return new HTMLRewriter()
       .on("head", hydrateState(authorization.userInfo))
+      .on("head", hydrateItems(userItems))
       .transform(response)
     // END OF STATE HYDRATION CODE BLOCK
 
