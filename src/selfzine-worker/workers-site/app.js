@@ -1,7 +1,5 @@
 import cookie from "cookie"
 
-//let AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_CALLBACK_URL, SALT
-
 // will be passed as secret later
 const auth0 = {
     domain: AUTH0_DOMAIN,
@@ -19,7 +17,7 @@ const generateStateParam = async () => {
     const { Data: state } = await resp.json()
     await AUTH_STORE.put(`state-${state}`, true, { expirationTtl: 86400 })
     return state
-  }
+}
   
 const verify = async event => {
     const cookieHeader = event.request.headers.get("Cookie")
@@ -126,7 +124,7 @@ const decodeJWT = function(token) {
       console.log(err.message)
       return false
     }
-  }
+}
 
 //Persisting authorization data in Workers KV
 const persistAuth = async exchange => {
@@ -138,10 +136,6 @@ const persistAuth = async exchange => {
   
     console.log(body) // { access_token: "...", id_token: "...", ... }
     const decoded = JSON.parse(decodeJWT(body.id_token))
-    // const validToken = validateToken(decoded)
-    // if (!validToken) {
-    //   return { status: 401 }
-    // }
 
     const text = new TextEncoder().encode(`${SALT}-${decoded.sub}`)
     const digest = await crypto.subtle.digest({ name: "SHA-256" }, text)
@@ -179,7 +173,7 @@ const exchangeCode = async code => {
         body,
       })
     )
-  }
+}
 
 // parse the incoming URL, and pass the code login parameter to exchangeCode. 
 // Check for a state parameter, which you will use to prevent CSRF attacks. 
@@ -217,16 +211,35 @@ export const handleRedirect = async event => {
     return {}
   }
 
+// API CODE
+
+/**
+ * Get items stored for a particualr user using user email
+ * @param {*} userInfo 
+ * @returns 
+ */
 export const getItems = async (userInfo) => {
   return await AUTH_STORE.get(userInfo.email);
 }
 
+/**
+ * Add one item for the user using user email as key
+ * @param {*} userInfo 
+ * @param {*} item 
+ */
 export const addItem = async (userInfo, item) => {
   
+  // Get the existing data from KV store
+  // Could be null
   let curItems = await getItems(userInfo);
   curItems = JSON.parse(curItems);
   curItems = curItems === null ? {} : curItems;
+
+  // A future timestamp for comparison
   let ts = parseInt(new Date().getTime() / 1000) * 2;
+
+  // Only store top 10 items
+  // remove the oldes item
   let delkey = null;
   let count = 1;
   for (var prop in curItems) {
@@ -251,7 +264,12 @@ export const addItem = async (userInfo, item) => {
   await AUTH_STORE.put(userInfo.email, JSON.stringify(curItems));
 }
 
-
+/**
+ * Remove an item for the user from KV store
+ * @param {*} userInfo 
+ * @param {*} key 
+ * @returns 
+ */
 export const removeItem = async (userInfo, key) => {
   
   let curItems = await getItems(userInfo);
