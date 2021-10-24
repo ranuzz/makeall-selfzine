@@ -1,5 +1,5 @@
 import { getAssetFromKV, mapRequestToAsset } from '@cloudflare/kv-asset-handler'
-import { authorize, handleRedirect, logout, addItem, getItems  } from "./auth0"
+import { authorize, handleRedirect, logout, addItem, getItems, removeItem  } from "./app"
 
 /**
  * The DEBUG flag will do two things that help during development:
@@ -90,6 +90,7 @@ async function handleEvent(event) {
         return new Response(e.message || e.toString(), { status: 500 })
       }
     }
+    // END OF LOGOUT CODE BLOCK
 
     if (url.pathname === "/submititem") {
       try {
@@ -110,7 +111,23 @@ async function handleEvent(event) {
         return new Response(e.message || e.toString(), { status: 500 })
       }
     }
-    // END OF LOGOUT CODE BLOCK
+
+    if (/^\/delitem\/[a-z,0-9]+$/.test(url.pathname)) {
+      try {
+        if (request.method !== "DELETE") {
+          return new Response("Method Not Allowed", {
+            status: 405
+          })
+        }
+
+        await removeItem(authorization.userInfo, url.pathname.split('\/')[2]);
+        return new Response("", { status: 200 })
+
+      } catch (e) {
+        return new Response(e.message || e.toString(), { status: 500 })
+      }
+    }
+    
 
     // BEGINNING OF WORKERS SITES
     // Make sure to not touch this code for the majority of the tutorial.
@@ -120,7 +137,7 @@ async function handleEvent(event) {
     // BEGINNING OF STATE HYDRATION CODE BLOCK
     return new HTMLRewriter()
       .on("head", hydrateState(authorization.userInfo))
-      .on("head", hydrateItems(userItems))
+      .on("head", hydrateItems(JSON.parse(userItems)))
       .transform(response)
     // END OF STATE HYDRATION CODE BLOCK
 

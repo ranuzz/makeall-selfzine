@@ -225,9 +225,10 @@ export const addItem = async (userInfo, item) => {
   
   let curItems = await getItems(userInfo);
   curItems = JSON.parse(curItems);
+  curItems = curItems === null ? {} : curItems;
   let ts = parseInt(new Date().getTime() / 1000) * 2;
   let delkey = null;
-  let count = 0;
+  let count = 1;
   for (var prop in curItems) {
     if (curItems.hasOwnProperty(prop)) {
       if (parseInt(prop) < ts) {
@@ -237,14 +238,37 @@ export const addItem = async (userInfo, item) => {
     }
   }
 
-  curItems["count"] = count;
-
   if (delkey !== null && count >= 10) {
-    delete curItems[delkey];  
+    delete curItems[delkey]; 
+    count -= 1; 
   }
+
+  curItems["count"] = count;
 
   let itemKey = parseInt(new Date().getTime() / 1000).toString();
   curItems[itemKey] = item;
 
+  await AUTH_STORE.put(userInfo.email, JSON.stringify(curItems));
+}
+
+
+export const removeItem = async (userInfo, key) => {
+  
+  let curItems = await getItems(userInfo);
+  curItems = JSON.parse(curItems);
+
+  if (curItems === null) {
+    return;
+  }
+
+  if (!(key in curItems)) {
+    return;
+  }
+  
+  let count = curItems["count"];
+  delete curItems[key];
+  count -= 1;
+
+  curItems["count"] = count;
   await AUTH_STORE.put(userInfo.email, JSON.stringify(curItems));
 }
