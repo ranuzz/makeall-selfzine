@@ -5,6 +5,7 @@ import {
   Route
 } from "react-router-dom";
 import Home from './views/Home';
+import About from './views/About';
 
 import './App.css';
 
@@ -14,7 +15,7 @@ function App() {
     <Router>
     <Switch>
       <Route path="/about">
-        <div>About</div>
+        <About></About>
       </Route>
       <Route path="/">
         <Home></Home>

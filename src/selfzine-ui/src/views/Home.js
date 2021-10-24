@@ -1,12 +1,10 @@
 import withRoot from '../app/withRoot.js';
 import React from 'react';
 import BasicAppBar from '../components/BasicAppBar.js';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import UserCard from '../components/UserCard.js';
 import Grid from '@mui/material/Grid';
 import ItemCards from '../components/ItemCards.js';
+import ItemInputCard from '../components/ItemInputCard.js';
 
 function Home() {
 
@@ -23,7 +21,20 @@ function Home() {
     if (document.querySelector('script#edge_items') !== null) {
         itemData = JSON.parse(document.querySelector('script#edge_items').innerText);
     } 
+    
 
+    // Dummy data for testing
+    // stateData = {
+    //     "given_name": "ranu",
+    //     "family_name": "ranu",
+    //     "picture": "",
+    //     "email": "ranuzz@makeall.dev"
+    // };
+
+    // itemData = {
+    //     "1635077585": "Sample Data",
+    //     "count": 1
+    // };
 
     return (
         <>
@@ -42,28 +53,7 @@ function Home() {
             <Grid item xs={4}>
             </Grid>
             <Grid item xs={4}>
-                <Box
-                    component="form"
-                    sx={{
-                        '& > :not(style)': { m: 1, width: '55ch' },
-                    }}
-                    noValidate
-                    autoComplete="off"
-                    action="/submititem"
-                    method="POST"
-                >
-                    <TextField 
-                        id="outlined-basic"
-                        
-                        variant="outlined" 
-                        name="item"
-                        multiline
-                        maxRows={4} 
-                        rows={1}
-                        placeholder={'Add Something You Achieved Today'}
-                        /> <br/>
-                    <Button variant="outlined" type="submit">Add</Button>
-                </Box>
+                <ItemInputCard userinfo={stateData}></ItemInputCard>
             </Grid>
             <Grid item xs={4}>
             </Grid>

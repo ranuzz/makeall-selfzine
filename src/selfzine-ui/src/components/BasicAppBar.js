@@ -5,7 +5,11 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
+import MenuIcon from '@mui/icons-material/Approval';
+import {
+  Link,
+  NavLink 
+} from "react-router-dom";
 
 export default function BasicAppBar() {
   return (
@@ -24,12 +28,35 @@ export default function BasicAppBar() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             SelfZine
           </Typography>
+          <Button color="inherit">
+            <NavLink 
+              to="/"
+              activeStyle={{
+                fontWeight: "bold",
+                color: "white"
+              }}
+              >
+                Home
+            </NavLink>
+          </Button>
+          <Button color="inherit">
+            <NavLink 
+              to="/about"
+              activeStyle={{
+                fontWeight: "bold",
+                color: "white"
+              }}
+              >
+                About
+            </NavLink>
+          </Button>
           <Button color="inherit" onClick={
             () => {
               document.cookie = "AUTH0-AUTH=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
               window.location = '/logout'
-            }
-            }>Logout</Button>
+            }}>
+              Logout
+          </Button>
         </Toolbar>
       </AppBar>
     </Box>
