@@ -7,6 +7,19 @@ import Button from '@mui/material/Button';
 
 function Home() {
 
+    let stateData = {
+        "given_name": ""
+    };
+    if (document.querySelector('script#edge_state') !== null) {
+        stateData = JSON.parse(document.querySelector('script#edge_state').innerText)
+    }
+    let itemData = {
+        "count": 0
+    }
+    if (document.querySelector('script#edge_items') !== null) {
+        itemData = JSON.parse(document.querySelector('script#edge_items').innerText)
+    }
+    
     return (
         <>
         <BasicAppBar></BasicAppBar>
@@ -23,6 +36,12 @@ function Home() {
             <TextField id="outlined-basic" label="Item" variant="outlined" name="item" />
             <Button variant="outlined" type="submit">Submit</Button>
         </Box>
+        <div>
+            {JSON.stringify(stateData)}
+        </div>
+        <div>
+            {JSON.stringify(itemData)}
+        </div>
         </>
     );
 
